@@ -15,4 +15,9 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-</project>
+  <!--<modules>
+  	<module>core</module>
+  	<module>cache</module>
+  	<module>failover</module>
+  </modules>
+--></project>
