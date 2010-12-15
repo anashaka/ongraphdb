@@ -7,7 +7,7 @@ import com.ongraphdb.Vertex;
 public class VertexStore extends DiskStore implements Store<Vertex> {
 	
 	public VertexStore(StoreConfig config) {
-		super(config.getHolesFileName(), config.getHolesFileName(), config.getDataMappedMemorySize());
+		super(config.getDataFileName(), config.getDataMappedMemorySize(), config.getInitialFileSize());
 		
 	}
 

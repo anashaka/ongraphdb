@@ -10,9 +10,6 @@ import org.junit.Test;
 import com.ongraphdb.service.MasterGraphDatabaseImpl;
 
 
-/**
- * Unit test for simple App.
- */
 public class OnGraphDBTest{
 	
 	@BeforeClass

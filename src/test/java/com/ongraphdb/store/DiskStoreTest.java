@@ -28,7 +28,7 @@ public class DiskStoreTest {
 	
 	@After
 	public void shoutdowndAndCleanStore() throws IOException, InterruptedException{
-		store.shoutdown();
+		store.shutdown();
 		File f = new File(DATA_FILE_NAME);
 		boolean success = f.delete();
 	    assertTrue(success);
@@ -47,42 +47,46 @@ public class DiskStoreTest {
 		int[] pos = new int[5];
 		pos[0] = store.writeData(DATA_10, BLOCK_SIZE);
 		assertEquals(5, pos[0]);		
-		assertEquals(new String(DATA_10), new String(store.readData(pos[0], BLOCK_SIZE)));
+		assertEquals(new String(DATA_10), new String(store.readData(pos[0])));
 		pos[1] = store.writeData(DATA_20, BLOCK_SIZE);
-		assertEquals(new String(DATA_20), new String(store.readData(pos[1], BLOCK_SIZE)));		
+		assertEquals(new String(DATA_20), new String(store.readData(pos[1])));		
 		pos[2] = store.writeData(DATA_100, BLOCK_SIZE);
-		assertEquals(new String(DATA_100), new String(store.readData(pos[2], BLOCK_SIZE)));
+		assertEquals(new String(DATA_100), new String(store.readData(pos[2])));
 		pos[3] = store.writeData(DATA_20, BLOCK_SIZE);
 		pos[4] = store.writeData(DATA_100, BLOCK_SIZE);
-		assertEquals(new String(DATA_100), new String(store.readData(pos[4], BLOCK_SIZE)));
+		assertEquals(new String(DATA_100), new String(store.readData(pos[4])));
 	}
 	
 	@Test
-	public void reopenStore() throws IOException {
+	public void reopenStoreAndReadByPosition() throws IOException {
 		int[] pos = new int[6];
 		pos[0] = store.writeData(DATA_10, BLOCK_SIZE);
 		
 		pos[1] = store.writeData(DATA_20, BLOCK_SIZE);
 		pos[2] = store.writeData(DATA_100, BLOCK_SIZE);
-		store.shoutdown();
+		store.shutdown();
 		store.start();
 		pos[3] = store.writeData(DATA_10, BLOCK_SIZE);
 		pos[4] = store.writeData(DATA_20, BLOCK_SIZE);
 		pos[5] = store.writeData(DATA_100, BLOCK_SIZE);
-		assertEquals(new String(DATA_10), new String(store.readData(pos[0], BLOCK_SIZE)));
-		assertEquals(new String(DATA_20), new String(store.readData(pos[1], BLOCK_SIZE)));
-		assertEquals(new String(DATA_100), new String(store.readData(pos[2], BLOCK_SIZE)));
-		assertEquals(new String(DATA_10), new String(store.readData(pos[3], BLOCK_SIZE)));
-		assertEquals(new String(DATA_20), new String(store.readData(pos[4], BLOCK_SIZE)));
-		assertEquals(new String(DATA_100), new String(store.readData(pos[5], BLOCK_SIZE)));
-		
+		assertEquals(new String(DATA_10), new String(store.readData(pos[0])));
+		assertEquals(new String(DATA_20), new String(store.readData(pos[1])));
+		assertEquals(new String(DATA_100), new String(store.readData(pos[2])));
+		assertEquals(new String(DATA_10), new String(store.readData(pos[3])));
+		assertEquals(new String(DATA_20), new String(store.readData(pos[4])));
+		assertEquals(new String(DATA_100), new String(store.readData(pos[5])));
 	}
 	
-	@Test
-	public void exitStore() throws IOException {
-		Runtime.getRuntime().exit(0);	
+/*	@Test
+	public void updateWithRecordFragmentation() throws IOException {		
+		int[] pos = new int[6];
+		pos[0] = store.writeData(DATA_10, BLOCK_SIZE);
+		pos[1] = store.writeData(DATA_20, BLOCK_SIZE);
+		store.updateData(pos[0], DATA_100, BLOCK_SIZE);
+		pos[2] = store.writeData(DATA_10, BLOCK_SIZE);
+		assertEquals(new String(DATA_100), new String(store.readData(pos[0])));
+		assertEquals(new String(DATA_20), new String(store.readData(pos[1])));
+		assertEquals(new String(DATA_10), new String(store.readData(pos[2])));
 	}
-	
-	
-	
+*/	
 } 

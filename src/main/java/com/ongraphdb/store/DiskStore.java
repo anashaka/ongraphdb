@@ -193,8 +193,9 @@ public class DiskStore {
 				dataChannel.write(buffer, pos);
 			}
 		} catch (IOException e) {
-			throw e;
 			// write to hole
+			throw e;
+			
 		}
 		return pos;
 	}
