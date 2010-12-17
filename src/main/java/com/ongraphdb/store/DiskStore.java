@@ -15,7 +15,7 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 
 public class DiskStore {
-	private final static int SIZE_BYTES = 4;
+	private final static int NEXT_BYTES = 4;
 	private static final int TYPE_BYTE = 1;
 	private static final int FRAGMENTED_BYTE = 1;
 	private static final int POINTER_BYTES = 4;
@@ -48,8 +48,8 @@ public class DiskStore {
 				dataMappedMemorySize);
 
 		if (newStore) {
-			mappedDataBuffer.putInt(SIZE_BYTES);
-			nextPosition = SIZE_BYTES + 1;
+			mappedDataBuffer.putInt(0);
+			nextPosition = NEXT_BYTES + 1;
 		} else {
 			nextPosition = mappedDataBuffer.getInt();
 		}
@@ -126,6 +126,27 @@ public class DiskStore {
 		return header;
 	}
 	
+	private void writeMappedBlockHeader(int pos, BlockHeader header){		
+		mappedDataBuffer.position(pos);		
+		mappedDataBuffer.putInt(header.getDataSize());
+		mappedDataBuffer.put(header.getFragmented());
+		if(header.isFragmented()){
+			mappedDataBuffer.putInt(header.getNextPos());
+		}
+	}
+	
+	private void writeBlockHeader(int pos, BlockHeader header) throws IOException {		
+		ByteBuffer buffer = ByteBuffer.allocate(HEADER_BYTES);
+		buffer.putInt(header.getDataSize());
+		buffer.put(header.getFragmented());
+		if(header.isFragmented()){
+			buffer.putInt(header.getNextPos());
+		}
+		buffer.flip();
+		dataChannel.position(pos);
+		dataChannel.write(buffer);
+	}
+	
 	private byte[] readBlock(int pos, BlockHeader header) throws IOException{
 		ByteBuffer buffer = ByteBuffer.allocate(header.getDataSize());
 		dataChannel.position(pos + HEADER_BYTES + (header.isFragmented() ? 0 : -POINTER_BYTES));
@@ -139,7 +160,7 @@ public class DiskStore {
 		mappedDataBuffer.get(data);
 		return data;
 	}
-	
+
 	public byte[] readData(int pos) throws IOException {
 		byte[] data;
 		BlockHeader header;
@@ -170,27 +191,28 @@ public class DiskStore {
 		return lastPos<dataMappedMemorySize;
 	}
 	
+	private void writeMappedBlock(int pos, BlockHeader header, byte[] data){		
+		mappedDataBuffer.position(pos + HEADER_BYTES +(header.isFragmented() ? 0 : -POINTER_BYTES));
+		mappedDataBuffer.put(data);
+	}
+	
+	private void writeBlock(int pos, BlockHeader header, byte[] data) throws IOException{
+		ByteBuffer buffer = ByteBuffer.wrap(data);
+		dataChannel.position(pos + HEADER_BYTES + (header.isFragmented() ? 0 : -POINTER_BYTES));
+		dataChannel.write(buffer);
+	}
+	
 	public int writeData(byte[] data, int blockSize) throws IOException {
-		// check that pos in mapped buffer
 		int recordSize = getRecordSize(data.length, blockSize);
 		int pos = nextPosition;
-		nextPosition = nextPosition + recordSize;
-		mappedDataBuffer.position(0);
-		mappedDataBuffer.putInt(nextPosition);
+		moveNextPosition(recordSize);
 		try {
 			if (isMapped(pos + recordSize)) {
-				mappedDataBuffer.position(pos);
-				mappedDataBuffer.putInt(data.length);
-				mappedDataBuffer.put((byte)0);
-				mappedDataBuffer.put(data);
+				writeMappedBlockHeader(pos, new BlockHeader().setDataSize(data.length).setFragmented(false));
+				writeMappedBlock(pos, new BlockHeader().setDataSize(data.length).setFragmented(false), data);
 			} else {
-				ByteBuffer buffer = ByteBuffer.allocate(data.length
-						+ SIZE_BYTES + FRAGMENTED_BYTE);
-				buffer.putInt(data.length);
-				buffer.put((byte)0);
-				buffer.put(data);
-				buffer.flip();
-				dataChannel.write(buffer, pos);
+				writeBlockHeader(pos, new BlockHeader().setDataSize(data.length).setFragmented(false));
+				writeBlock(pos, new BlockHeader().setDataSize(data.length).setFragmented(false), data);
 			}
 		} catch (IOException e) {
 			// write to hole
@@ -200,15 +222,32 @@ public class DiskStore {
 		return pos;
 	}
 
-	public byte[] updateData(int pos, byte[] data, int blockSize) {
-		if (pos + blockSize < dataMappedMemorySize) {
-			
+	private void moveNextPosition(int increment) {
+		nextPosition = nextPosition + increment;
+		mappedDataBuffer.position(0);
+		mappedDataBuffer.putInt(nextPosition);
+	}
+
+	public byte[] updateData(int pos, byte[] data, int blockSize) throws IOException {
+		BlockHeader header;
+		if (isMapped(pos + HEADER_BYTES)) {
+			header = readMappedBlockHeader(pos);
+		} else {
+			header = readBlockHeader(pos);
 		}
+		if(getRecordSize(header.getDataSize(), blockSize)>= data.length + header.getSize() ){
+			if(header.isFragmented()) {
+				// write hole
+			}
+			writeBlockHeader(pos, header.setDataSize(data.length).setFragmented(false));
+			writeBlock(pos, header,data);
+		} 
+
 		return data;
 	}
 
 	protected int getRecordSize(int dataSize, int blockSize) {
-		return ((SIZE_BYTES + /*TYPE_BYTE +*/ FRAGMENTED_BYTE + dataSize + blockSize - 1) / blockSize)
+		return ((BlockHeader.SIZE_BYTES + /*TYPE_BYTE +*/ BlockHeader.FRAGMENTED_BYTE + dataSize + blockSize - 1) / blockSize)
 				* blockSize;
 	}
 
