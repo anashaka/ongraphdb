@@ -1,47 +1,55 @@
 package com.ongraphdb.store;
 
-import com.ongraphdb.DBConfig;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.ObjectBuffer;
 import com.ongraphdb.StoreConfig;
+import com.ongraphdb.TypeResolver;
 import com.ongraphdb.Vertex;
 
-public class VertexStore extends DiskStore implements Store<Vertex> {
-	
-	public VertexStore(StoreConfig config) {
-		super(config.getDataFileName(), config.getDataMappedMemorySize(), config.getInitialFileSize());
-		
+public class VertexStore implements Store<Vertex> {
+	private final DiskStore diskStore;
+	private final Kryo kryo;
+
+	//
+
+	public VertexStore(final StoreConfig config, final Kryo kryo) {
+		diskStore = new LinkedDiskStore(config.getDataFileName(), config.getDataMappedMemorySize(),
+				config.getInitialFileSize());
+		this.kryo = kryo;
 	}
 
-	public Vertex readItem(long position) {
-		/*getFileName()
-		getData()
-		deserialize()
-		*/
-		return null;
+	public Vertex readItem(int id) throws IOException {
+		ObjectBuffer buffer = new ObjectBuffer(kryo);
+		byte[] data = diskStore.readData(id);
+		TypeResolver.getClassByID(data[0]);
+		return buffer.readObjectData(data, TypeResolver.getClassByID(data[0]));
 	}
 
-	public Vertex writeItem(Vertex vertex) {
-		/*if(hasId){
-			getPos
+	public Vertex writeItem(Vertex vertex) throws IOException {
+		ObjectBuffer buffer = new ObjectBuffer(kryo);
+		if (vertex.hasId()) {
+			diskStore.updateData(vertex.getId(), buffer.writeObjectData(vertex), vertex.getBlockSize());
 		} else {
-			getFreeId()
-		}	
-		serialize()
-		if(getBlockSizeByVertexType()){
-			
+			int id = diskStore.writeData(buffer.writeObjectData(vertex), vertex.getBlockSize());
+			vertex.setId(id);
 		}
-		writeData()*/
-		return null;
+		return vertex;
 	}
 
-	public Vertex removeItem(Vertex vertex) {
-		//removeFromCache
-		return null;
+	public void removeItem(Vertex vertex) throws IOException {
+		diskStore.removeData(vertex.getId());
+
 	}
-	
-	byte[] getData(long pos){
-		return null;
+
+	public void start() throws IOException {
+		diskStore.start();
 	}
-	
-	
+
+	public void shutdown() throws IOException {
+		diskStore.shutdown();
+	}
 
 }

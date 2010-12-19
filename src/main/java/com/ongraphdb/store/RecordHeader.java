@@ -2,7 +2,7 @@ package com.ongraphdb.store;
 
 public class RecordHeader {
 	private final static int SIZE_BYTES = 4;
-	private static final int TYPE_BYTE = 1;
+	//private static final int TYPE_BYTE = 1;
 	private static final int FRAGMENTED_BYTE = 1;
 	private static final int POINTER_BYTES = 4;
 	static final int HEADER_BYTES = SIZE_BYTES + /*TYPE_BYTE +*/ FRAGMENTED_BYTE + POINTER_BYTES;

@@ -8,7 +8,6 @@ import java.io.IOException;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class DiskStoreTest {
@@ -25,7 +24,7 @@ public class DiskStoreTest {
 
 	@Before
 	public void initStore() throws IOException{
-		store = new DiskStore(DATA_FILE_NAME, DATA_MAPPED_BUFFER_SIZE, DATA_FILE_SIZE);
+		store = new LinkedDiskStore(DATA_FILE_NAME, DATA_MAPPED_BUFFER_SIZE, DATA_FILE_SIZE);
 		store.start();
 	}
 	
@@ -99,7 +98,7 @@ public class DiskStoreTest {
 		store.updateData(pos[0], DATA_200, BLOCK_SIZE);
 		assertEquals("Update fragmented entry to new data with fragmentation (in existed place)", new String(DATA_200), new String(store.readData(pos[0])));
 		store.updateData(pos[2], DATA_200, BLOCK_SIZE);
-		assertEquals("CheckFragmented read from channel", new String(DATA_200), new String(store.readData(pos[0])));
+		assertEquals("CheckFragmented read from channel", new String(DATA_200), new String(store.readData(pos[2])));
 	}
 
 } 

@@ -13,6 +13,11 @@ public abstract interface Element {
     
     public Object removeProperty(String key);
     
-    public Object getId();
+    public int getId();
+    
+    public void setId(int id);
+    
+    public boolean hasId();
+    
 
 }

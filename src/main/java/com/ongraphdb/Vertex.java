@@ -9,4 +9,6 @@ public interface Vertex extends Element{
 	
 	Edge connectTo(Vertex endPoint, EdgeType edgeType);
 
+	public int getBlockSize();
+
 }

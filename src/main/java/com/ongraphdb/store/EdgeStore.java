@@ -1,5 +1,7 @@
 package com.ongraphdb.store;
 
+import java.io.IOException;
+
 import com.ongraphdb.Edge;
 
 public class EdgeStore implements Store<Edge>{
@@ -12,8 +14,19 @@ public class EdgeStore implements Store<Edge>{
 		return null;
 	}
 
-	public Edge removeItem(Edge edge) {
+	public Edge readItem(int id) throws IOException {
 		return null;
 	}
+
+	public void start() throws IOException {
+	}
+
+	public void shutdown() throws IOException {
+	}
+
+	public void removeItem(Edge item) throws IOException {
+	}
+	
+	
 
 }

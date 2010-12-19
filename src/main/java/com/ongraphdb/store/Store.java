@@ -1,7 +1,11 @@
 package com.ongraphdb.store;
 
+import java.io.IOException;
+
 public interface Store<E> {
-	E readItem(long id);
-	E writeItem(E element);
-	E removeItem(E item);
+	public E readItem(int id) throws IOException;
+	public E writeItem(E element) throws IOException;
+	public void removeItem(E item) throws IOException;
+	public void start() throws IOException;
+	public void shutdown() throws IOException;
 }
